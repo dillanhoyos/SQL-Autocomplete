@@ -55,7 +55,7 @@ Make sure you have the following installed:
 First, clone the project from GitHub:
 ```bash
 git clone https://github.com/dillanhoyos/SQL-Autocomplete.git
-cd sql-autocomplete/SQL-Autocomplete
+cd SQL-Autocomplete
 ```
 
 ### 2. Configure Environment Variables
