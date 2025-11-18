@@ -104,8 +104,13 @@ async def autocomplete_stream(request: AutocompleteRequest):
 
     async def event_generator():
         suggestion_count = 0
+        time_to_first_suggestion = None
+        
         try:
             async for suggestion in suggestion_generator:
+                if suggestion_count == 0:
+                    time_to_first_suggestion = int((time.time() - start_time) * 1000)
+                
                 suggestion_count += 1
                 data = {
                     "prompt": suggestion.get("prompt"),
@@ -120,6 +125,7 @@ async def autocomplete_stream(request: AutocompleteRequest):
             latency_ms = int((time.time() - start_time) * 1000)
             metadata = {
                 "latency_ms": latency_ms,
+                "time_to_first_suggestion_ms": time_to_first_suggestion,
                 "model": "codestral-latest",
                 "requestId": request.requestId,
                 "suggestions_count": suggestion_count

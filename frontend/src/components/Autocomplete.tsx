@@ -35,6 +35,7 @@ export default function Autocomplete() {
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [latency, setLatency] = useState<number | null>(null)
+  const [timeToFirstSuggestion, setTimeToFirstSuggestion] = useState<number | null>(null)
   const [selectedSchema, setSelectedSchema] = useState<Schema>(schemas[0])
   const [conversationHistory, setConversationHistory] = useState<Message[]>([])
   const debouncedInput = useDebounce(input, 500) // 500ms debounce delay
@@ -60,6 +61,7 @@ export default function Autocomplete() {
     setSuggestions([]);
     setIsLoading(true)
     setLatency(null)
+    setTimeToFirstSuggestion(null)
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/autocomplete-stream`, {
@@ -100,15 +102,22 @@ export default function Autocomplete() {
                           setIsLoading(false);
                           if (data.metadata) {
                               setLatency(data.metadata.latency_ms);
+                              if (data.metadata.time_to_first_suggestion_ms) {
+                                setTimeToFirstSuggestion(data.metadata.time_to_first_suggestion_ms);
+                              }
                           }
                           return;
                       }
 
                       if (data.prompt && data.sqlQuery) {
-                          setSuggestions(prev => [...prev, {
+                          setSuggestions(prev => {
+                            // If this is the first suggestion, capture the time roughly if not provided by backend yet
+                            // (Ideally backend provides it in metadata at the end, which we handle above)
+                            return [...prev, {
                               prompt: data.prompt,
                               sqlQuery: data.sqlQuery
-                          }]);
+                            }];
+                          });
                           setIsDropdownOpen(true);
                           setSelectedIndex(-1);
                       }
@@ -289,9 +298,14 @@ export default function Autocomplete() {
             )}
 
             {/* Latency display */}
-            {latency !== null && !isLoading && (
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-mono">
-                {latency}ms
+            {!isLoading && (
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-mono flex gap-3">
+                {timeToFirstSuggestion !== null && (
+                  <span title="Time to First Suggestion">⚡ {timeToFirstSuggestion}ms</span>
+                )}
+                {latency !== null && (
+                   <span title="Total Request Latency">🕒 {latency}ms</span>
+                )}
               </div>
             )}
           </div>

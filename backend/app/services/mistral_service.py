@@ -1,6 +1,6 @@
 import json
 from typing import List, Dict, Any, AsyncGenerator
-from mistralai.async_client import MistralAsyncClient
+from mistralai import Mistral
 from app.config import settings
 import logging
 
@@ -10,7 +10,7 @@ class MistralService:
     """A simplified service for interacting with the Mistral AI API using the chat endpoint."""
     
     def __init__(self):
-        self.client = MistralAsyncClient(api_key=settings.mistral_api_key)
+        self.client = Mistral(api_key=settings.mistral_api_key)
         self.model = "codestral-latest"
         
     async def generate_sql_suggestions(
@@ -55,7 +55,7 @@ Schema:
         
         try:
             logger.info(f"Requesting suggestions for input: '{user_input}'")
-            response = await self.client.chat.complete(
+            response = await self.client.chat.complete_async(
                 model=self.model,
                 messages=messages,
                 temperature=0.2,
@@ -125,7 +125,7 @@ Schema:
             
             buffer = ""
             suggestion_count = 0
-            async for chunk in self.client.chat.complete_stream(
+            async for chunk in await self.client.chat.stream_async(
                 model=self.model,
                 messages=messages,
                 temperature=0.2
@@ -133,21 +133,31 @@ Schema:
                 if suggestion_count >= 3:
                     break
 
-                content = chunk.choices[0].delta.content
+                content = chunk.data.choices[0].delta.content
                 if content:
                     buffer += content
                     while '\n' in buffer:
                         if suggestion_count >= 3:
                             break
                         line, buffer = buffer.split('\n', 1)
-                        if line.strip():
+                        
+                        # Clean up markdown formatting
+                        clean_line = line.strip()
+                        if clean_line.startswith("```"):
+                            continue
+                        if not clean_line:
+                            continue
+                            
+                        if clean_line:
                             try:
-                                suggestion = json.loads(line.strip())
+                                suggestion = json.loads(clean_line)
                                 if isinstance(suggestion, dict) and "prompt" in suggestion and "sqlQuery" in suggestion:
                                     yield suggestion
                                     suggestion_count += 1
                             except json.JSONDecodeError:
-                                logger.warning(f"Failed to decode streaming JSON line: {line}")
+                                # Only log if it looks like data but failed (ignore simple braces)
+                                if len(clean_line) > 5 and clean_line not in ["{", "}", "[", "]"]:
+                                    logger.warning(f"Failed to decode streaming JSON line: {clean_line}")
         except Exception as e:
             logger.error(f"Mistral API streaming error: {e}", exc_info=True)
             yield {
@@ -158,4 +168,3 @@ Schema:
 
 # Global instance
 mistral_service = MistralService()
-
