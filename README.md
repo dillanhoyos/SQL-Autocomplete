@@ -1,9 +1,11 @@
 # Natural Language SQL Autocomplete
 
 This project is a high-performance, AI-powered autocomplete system that translates natural language into SQL queries in real-time. It's built with a modern, snappy frontend and a high-performance backend, all containerized with Docker for easy setup and deployment. The primary focus is on speed and user experience, delivering multiple relevant suggestions with sub-second latency.
+<img width="1545" height="864" alt="image" src="https://github.com/user-attachments/assets/c72b6b3a-c96d-48c9-a9ce-da3d6a38555b" />
 
 
 ---
+
 
 ## ✨ Features
 
