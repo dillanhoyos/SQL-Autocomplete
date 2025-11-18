@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # Backend FastAPI Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sql-autocomplete-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=info
+      - LLM_TIMEOUT_MS=100
+      - MAX_CONVERSATION_HISTORY=5
+      - MAX_WORKERS=4
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    networks:
+      - sql-autocomplete-network
+    restart: unless-stopped
+
+  # Frontend Next.js Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sql-autocomplete-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+      - NEXT_PUBLIC_MIN_CHARS_TRIGGER=3
+      - NEXT_PUBLIC_SMART_TRIGGER_DELAY_MS=150
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - sql-autocomplete-network
+    restart: unless-stopped
+    command: npm run dev
+
+networks:
+  sql-autocomplete-network:
+    driver: bridge
+
+volumes:
+  backend_data:
+  frontend_data:
+
