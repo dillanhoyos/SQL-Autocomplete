@@ -16,7 +16,7 @@ This project is a autocomplete system that translates natural language into SQL 
 - **Conversation History:** Remembers the context of your current session to provide more relevant follow-up queries.
 - **Modern UI:** A clean, terminal-inspired interface built for speed and clarity.
 - **Dockerized:** Fully containerized with Docker Compose for one-command setup.
-- **Optimized for Speed:** Every component, from the frontend debounce to the backend prompts, is tuned for performance.
+- **Optimized for Speed:** Every component, from the frontend debounce to the backend prompts.
 
 ---
 
